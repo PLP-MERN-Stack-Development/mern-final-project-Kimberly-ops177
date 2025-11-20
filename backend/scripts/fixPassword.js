@@ -9,8 +9,9 @@ const fixPassword = async () => {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lms');
     console.log('MongoDB Connected\n');
 
-    const email = 'kimberlywanjiku28@gmail.com';
-    const newPassword = 'password123';
+    const email = process.env.FIX_EMAIL;
+    const newPassword = process.env.FIX_NEW_PASSWORD;
+
 
     const user = await User.findOne({ email });
 

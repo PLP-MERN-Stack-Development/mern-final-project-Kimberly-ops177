@@ -9,7 +9,7 @@ const debugUser = async () => {
     await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/lms');
     console.log('MongoDB Connected\n');
 
-    const email = 'kimberlywanjiku28@gmail.com';
+    const email = process.env.FIX_EMAIL;
 
     // Get user WITH password field
     const user = await User.findOne({ email }).select('+password');
