@@ -12,36 +12,44 @@ const generateToken = (id) => {
 // @route   POST /api/auth/register
 // @access  Public
 export const register = async (req, res) => {
-  try {
-    const { name, email, password, role } = req.body;
+   try {
+     const { name, email, password, role } = req.body;
+     console.log(`[${new Date().toISOString()}] Registration attempt for email: ${email}, name: ${name}, role: ${role || 'student'}`);
 
-    // Validate input
-    if (!name || !email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide name, email, and password'
-      });
-    }
+     // Validate input
+     if (!name || !email || !password) {
+       console.log(`[${new Date().toISOString()}] Registration failed: Missing required fields - name: ${!!name}, email: ${!!email}, password: ${!!password}`);
+       return res.status(400).json({
+         success: false,
+         message: 'Please provide name, email, and password'
+       });
+     }
 
-    // Check if user already exists
-    const userExists = await User.findOne({ email });
-    if (userExists) {
-      return res.status(400).json({
-        success: false,
-        message: 'User already exists with this email'
-      });
-    }
+     // Check if user already exists
+     console.log(`[${new Date().toISOString()}] Checking if user exists for email: ${email}`);
+     const userExists = await User.findOne({ email });
+     console.log(`[${new Date().toISOString()}] User exists check result: ${!!userExists}`);
+     if (userExists) {
+       console.log(`[${new Date().toISOString()}] Registration failed: User already exists with email: ${email}`);
+       return res.status(400).json({
+         success: false,
+         message: 'User already exists with this email'
+       });
+     }
 
-    // Create user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      role: role || 'student' // Default to student if not provided
-    });
+     // Create user
+     console.log(`[${new Date().toISOString()}] Creating new user with email: ${email}`);
+     const user = await User.create({
+       name,
+       email,
+       password,
+       role: role || 'student' // Default to student if not provided
+     });
+     console.log(`[${new Date().toISOString()}] User created successfully with ID: ${user._id}, hashed password length: ${user.password ? user.password.length : 'undefined'}`);
 
     // Generate token
     const token = generateToken(user._id);
+    console.log(`[${new Date().toISOString()}] JWT token generated for user: ${user._id}`);
 
     res.status(201).json({
       success: true,
@@ -59,7 +67,7 @@ export const register = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Register error:', error);
+    console.error(`[${new Date().toISOString()}] Register error:`, error.message, error.stack);
     res.status(500).json({
       success: false,
       message: error.message || 'Error registering user'
@@ -71,39 +79,48 @@ export const register = async (req, res) => {
 // @route   POST /api/auth/login
 // @access  Public
 export const login = async (req, res) => {
-  try {
-    const { email, password } = req.body;
+   try {
+     const { email, password } = req.body;
+     console.log(`[${new Date().toISOString()}] Login attempt for email: ${email}, password length: ${password ? password.length : 'undefined'}`);
 
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({
-        success: false,
-        message: 'Please provide email and password'
-      });
-    }
+     // Validate input
+     if (!email || !password) {
+       console.log(`[${new Date().toISOString()}] Login failed: Missing email or password - email: ${!!email}, password: ${!!password}`);
+       return res.status(400).json({
+         success: false,
+         message: 'Please provide email and password'
+       });
+     }
 
-    // Find user and include password for comparison
-    const user = await User.findOne({ email }).select('+password');
+     // Find user and include password for comparison
+     console.log(`[${new Date().toISOString()}] Querying database for user with email: ${email}`);
+     const user = await User.findOne({ email }).select('+password');
+     console.log(`[${new Date().toISOString()}] User query result: ${!!user}, user ID: ${user ? user._id : 'null'}, hashed password length: ${user && user.password ? user.password.length : 'undefined'}`);
 
-    if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
+     if (!user) {
+       console.log(`[${new Date().toISOString()}] Login failed: User not found for email: ${email}`);
+       return res.status(401).json({
+         success: false,
+         message: 'Invalid credentials'
+       });
+     }
 
-    // Check password
-    const isPasswordCorrect = await user.comparePassword(password);
+     // Check password
+     console.log(`[${new Date().toISOString()}] Checking password for user: ${user._id}`);
+     const isPasswordCorrect = await user.comparePassword(password);
+     console.log(`[${new Date().toISOString()}] Password comparison result: ${isPasswordCorrect}`);
 
-    if (!isPasswordCorrect) {
-      return res.status(401).json({
-        success: false,
-        message: 'Invalid credentials'
-      });
-    }
+     if (!isPasswordCorrect) {
+       console.log(`[${new Date().toISOString()}] Login failed: Incorrect password for user: ${user._id}`);
+       return res.status(401).json({
+         success: false,
+         message: 'Invalid credentials'
+       });
+     }
 
     // Generate token
     const token = generateToken(user._id);
+    console.log(`[${new Date().toISOString()}] Login successful, JWT token generated for user: ${user._id}`);
 
     res.status(200).json({
       success: true,
@@ -121,7 +138,7 @@ export const login = async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
+    console.error(`[${new Date().toISOString()}] Login error:`, error.message, error.stack);
     res.status(500).json({
       success: false,
       message: error.message || 'Error logging in'
